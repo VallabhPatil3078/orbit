@@ -1,0 +1,13 @@
+tasks:
+  lint:
+    command: "echo Linting code..."
+    depends_on: []
+  format:
+    command: "echo Formatting code..."
+    depends_on: []
+  build:
+    command: "echo Building binary..."
+    depends_on: ["lint", "format"]
+  test:
+    command: "echo Running tests..."
+    depends_on: ["build"]

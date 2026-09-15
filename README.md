@@ -4,7 +4,11 @@
 
 By intercepting Git hooks (like pre-commit), Orbit intelligently schedules validation checks—such as formatters, linters, and unit tests. Instead of naive parallel execution, Orbit parses task configurations into a Directed Acyclic Graph (DAG), maximizing CPU efficiency by executing independent tasks concurrently while strictly enforcing execution order for dependent tasks.
 
-![Orbit Architecture](assets/architecture.svg)
+<div align="center">
+  <br>
+  <img src="assets/architecture.svg" alt="Orbit Architecture">
+  <br>
+</div>
 
 ## Features
 - **DAG Engine:** Parses tasks using Topological Sort (Kahn's algorithm).
@@ -14,12 +18,17 @@ By intercepting Git hooks (like pre-commit), Orbit intelligently schedules valid
 
 ## System Architecture
 Orbit decouples parsing, graph math, and process execution into clean packages:
-![Package Structure](assets/package-structure.svg)
+
+<br>
+<div align="center">
+  <img src="assets/package-structure.svg" alt="Package Structure">
+</div>
+<br>
 
 ## How it works
 Orbit looks for an orbit.yaml file in the root of your project:
 
-`yaml
+``yaml
 tasks:
   lint:
     command: "npm run lint"
@@ -30,9 +39,14 @@ tasks:
   build:
     command: "npm run build"
     depends_on: ["lint", "format"] # Build waits until lint and format finish
-`
+``
 
 Behind the scenes, Orbit groups the tasks into dependent "Tiers" and processes them exactly like this:
-![DAG Execution](assets/execution.svg)
+
+<br>
+<div align="center">
+  <img src="assets/execution.svg" alt="DAG Execution">
+</div>
+<br>
 
 *(This project is currently under active development).*

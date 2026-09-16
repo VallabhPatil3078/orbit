@@ -1,7 +1,9 @@
-package config
+﻿package config
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,19 +21,26 @@ type OrbitConfig struct {
 
 // ParseConfig reads a YAML file and unmarshals it into the OrbitConfig struct.
 func ParseConfig(filepath string) (*OrbitConfig, error) {
-	// Read the raw bytes from the file
 	data, err := os.ReadFile(filepath)
 	if err != nil {
-		return nil, err // Return the error if the file doesn't exist or is unreadable
+		return nil, err 
 	}
 
-	// Create an empty instance of our struct
 	var cfg OrbitConfig
 
-	// Unmarshal converts the raw YAML bytes into our Go struct
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
-		return nil, err // Return an error if the YAML format is invalid
+		return nil, err 
+	}
+
+	// Validation
+	for name, task := range cfg.Tasks {
+		if strings.TrimSpace(task.Command) == "" {
+			return nil, fmt.Errorf("task %q has an empty command", name)
+		}
+		if strings.ContainsAny(name, " \t\n\r") {
+			return nil, fmt.Errorf("task name %q contains invalid whitespace characters", name)
+		}
 	}
 
 	return &cfg, nil

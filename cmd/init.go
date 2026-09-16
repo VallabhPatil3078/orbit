@@ -1,6 +1,7 @@
-package cmd
+﻿package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,12 +9,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var force bool
+
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initializes Orbit in the current repository",
 	Long:  `Generates the orbit.yaml config file and installs the Git pre-commit hook.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// 1. Create orbit.yaml template
+		if _, err := os.Stat("orbit.yaml"); err == nil && !force {
+			fmt.Println("[!] orbit.yaml already exists. Skipping. (use --force to overwrite)")
+			return
+		}
+
 		yamlContent := []byte(`tasks:
   hello:
     command: "echo Hello World"
@@ -33,9 +41,26 @@ var initCmd = &cobra.Command{
 		}
 
 		hookPath := filepath.Join(hookDir, "pre-commit")
-		
-		// For Windows, it's typically a shell script that Git Bash runs
 		hookContent := []byte("#!/bin/sh\nexec orbit run\n")
+
+		if _, err := os.Stat(hookPath); err == nil {
+			existingContent, readErr := os.ReadFile(hookPath)
+			if readErr != nil {
+				fmt.Printf("Error reading existing pre-commit hook: %v\n", readErr)
+				return
+			}
+			
+			if bytes.Contains(existingContent, []byte("exec orbit run")) {
+				fmt.Println("[V] Orbit is already installed in pre-commit hook.")
+			} else if !force {
+				backupPath := hookPath + ".orbit-backup"
+				fmt.Printf("[!] Existing pre-commit hook found. Backing up to %s\n", backupPath)
+				if renameErr := os.Rename(hookPath, backupPath); renameErr != nil {
+					fmt.Printf("Error backing up hook: %v\n", renameErr)
+					return
+				}
+			}
+		}
 		
 		if err := os.WriteFile(hookPath, hookContent, 0755); err != nil {
 			fmt.Printf("Error creating pre-commit hook: %v\n", err)
@@ -48,5 +73,6 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
+	initCmd.Flags().BoolVarP(&force, "force", "f", false, "Overwrite existing orbit.yaml and hooks")
 	rootCmd.AddCommand(initCmd)
 }

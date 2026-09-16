@@ -1,7 +1,8 @@
-package graph
+﻿package graph
 
 import (
 	"errors"
+	"fmt"
 )
 
 // Node represents a task in the DAG.
@@ -41,7 +42,7 @@ func (g *DAG) BuildEdges() error {
 	for name, node := range g.Nodes {
 		for _, dep := range node.DependsOn {
 			if _, exists := g.Nodes[dep]; !exists {
-				return errors.New("dependency not found: " + dep)
+				return fmt.Errorf("task %q depends on unknown task %q", name, dep)
 			}
 			g.Adjacency[dep] = append(g.Adjacency[dep], name)
 			node.InDegree++

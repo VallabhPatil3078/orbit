@@ -1,4 +1,4 @@
-package runner
+﻿package runner
 
 import (
 	"bytes"
@@ -34,14 +34,23 @@ func ExecuteTiers(tiers [][]*graph.Node) error {
 		wg.Wait()
 		close(results)
 
+		var tierErrors []error
 		// Check results for this tier
 		for res := range results {
 			if res.Error != nil {
 				// Print the buffered output if it failed so the user knows what went wrong
 				fmt.Printf("\n[X] Task '%s' failed:\n%s\n", res.Node.Name, res.Output)
-				return fmt.Errorf("task %s failed: %w", res.Node.Name, res.Error)
+				tierErrors = append(tierErrors, fmt.Errorf("task %s failed", res.Node.Name))
+			} else {
+				fmt.Printf("[V] Task '%s' finished successfully.\n", res.Node.Name)
 			}
-			fmt.Printf("[V] Task '%s' finished successfully.\n", res.Node.Name)
+		}
+
+		if len(tierErrors) > 0 {
+			if len(tierErrors) == 1 {
+				return tierErrors[0]
+			}
+			return fmt.Errorf("%d tasks failed in tier %d", len(tierErrors), i)
 		}
 	}
 	return nil

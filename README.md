@@ -1,4 +1,5 @@
 ﻿# Orbit 🪐
+![CI](https://github.com/VallabhPatil3078/orbit/actions/workflows/ci.yml/badge.svg)
 
 **Orbit** is a localized, high-performance DAG-based task orchestrator designed to act as an instant CI/CD gatekeeper for your Git commits. 
 
@@ -56,3 +57,4 @@ Behind the scenes, Orbit groups the tasks into dependent "Tiers" and processes t
 <br>
 
 *(This project is currently under active development).*
+

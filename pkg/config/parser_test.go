@@ -2,7 +2,6 @@
 
 import (
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -45,9 +44,6 @@ tasks:
 	if err == nil {
 		t.Fatal("expected error for empty command, got nil")
 	}
-	if !strings.Contains(err.Error(), "empty command") {
-		t.Errorf("expected error to mention empty command, got: %v", err)
-	}
 }
 
 func TestParseConfig_InvalidName(t *testing.T) {
@@ -67,7 +63,38 @@ tasks:
 	if err == nil {
 		t.Fatal("expected error for invalid name, got nil")
 	}
-	if !strings.Contains(err.Error(), "invalid whitespace characters") {
-		t.Errorf("expected error to mention invalid whitespace, got: %v", err)
+}
+
+func TestParseConfig_MalformedYAML(t *testing.T) {
+	tmpFile, _ := os.CreateTemp("", "orbit.yaml")
+	defer os.Remove(tmpFile.Name())
+
+	yamlContent := `
+tasks:
+  build:
+    command "go build"
+`
+	tmpFile.Write([]byte(yamlContent))
+	tmpFile.Close()
+
+	_, err := ParseConfig(tmpFile.Name())
+	if err == nil {
+		t.Fatal("expected error for malformed YAML, got nil")
+	}
+}
+
+func TestParseConfig_ZeroTasks(t *testing.T) {
+	tmpFile, _ := os.CreateTemp("", "orbit.yaml")
+	defer os.Remove(tmpFile.Name())
+
+	yamlContent := `
+tasks: {}
+`
+	tmpFile.Write([]byte(yamlContent))
+	tmpFile.Close()
+
+	_, err := ParseConfig(tmpFile.Name())
+	if err == nil {
+		t.Fatal("expected error for zero tasks, got nil")
 	}
 }

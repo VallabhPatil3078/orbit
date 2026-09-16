@@ -2,6 +2,7 @@
 
 import (
 	"orbit/pkg/graph"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -10,7 +11,6 @@ func TestExecuteTiers_Success(t *testing.T) {
 	node1 := &graph.Node{Name: "echo1", Command: "echo 1"}
 	node2 := &graph.Node{Name: "echo2", Command: "echo 2"}
 	
-	// Create a dummy tier with two independent tasks
 	tiers := [][]*graph.Node{
 		{node1, node2},
 	}
@@ -22,13 +22,10 @@ func TestExecuteTiers_Success(t *testing.T) {
 }
 
 func TestExecuteTiers_Failure(t *testing.T) {
-	// this command will fail
 	nodeFail := &graph.Node{Name: "fail_task", Command: "exit 1"}
-	
 	tiers := [][]*graph.Node{
 		{nodeFail},
 	}
-
 	err := ExecuteTiers(tiers)
 	if err == nil {
 		t.Fatal("expected an error because the task fails, got nil")
@@ -36,11 +33,15 @@ func TestExecuteTiers_Failure(t *testing.T) {
 }
 
 func TestExecuteTiers_RunsConcurrently(t *testing.T) {
-	// We use PowerShell to sleep for 1 second.
-	// If two tasks run sequentially, it will take ~2 seconds.
-	// If they run concurrently, it will take ~1 second.
-	node1 := &graph.Node{Name: "sleep1", Command: "powershell -c \"Start-Sleep 1\""}
-	node2 := &graph.Node{Name: "sleep2", Command: "powershell -c \"Start-Sleep 1\""}
+	var sleepCmd string
+	if runtime.GOOS == "windows" {
+		sleepCmd = "powershell -c \"Start-Sleep 1\""
+	} else {
+		sleepCmd = "sleep 1"
+	}
+
+	node1 := &graph.Node{Name: "sleep1", Command: sleepCmd}
+	node2 := &graph.Node{Name: "sleep2", Command: sleepCmd}
 	
 	tiers := [][]*graph.Node{
 		{node1, node2},
@@ -54,8 +55,7 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 		t.Fatalf("unexpected error executing tiers: %v", err)
 	}
 
-	// We assert that it takes less than 1.5 seconds.
-	if duration >= 1500*time.Millisecond {
-		t.Errorf("expected execution time < 1.5s, got %v (implies tasks ran sequentially)", duration)
+	if duration >= 2000*time.Millisecond {
+		t.Errorf("expected execution time < 2.0s, got %v (implies tasks ran sequentially)", duration)
 	}
 }

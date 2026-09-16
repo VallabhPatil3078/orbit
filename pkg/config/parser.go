@@ -8,18 +8,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// TaskConfig represents a single task definition from the YAML file.
 type TaskConfig struct {
 	Command   string   `yaml:"command"`
 	DependsOn []string `yaml:"depends_on"`
 }
 
-// OrbitConfig represents the entire orbit.yaml file structure.
 type OrbitConfig struct {
 	Tasks map[string]TaskConfig `yaml:"tasks"`
 }
 
-// ParseConfig reads a YAML file and unmarshals it into the OrbitConfig struct.
 func ParseConfig(filepath string) (*OrbitConfig, error) {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
@@ -33,7 +30,10 @@ func ParseConfig(filepath string) (*OrbitConfig, error) {
 		return nil, err 
 	}
 
-	// Validation
+	if len(cfg.Tasks) == 0 {
+		return nil, fmt.Errorf("no tasks defined in orbit.yaml")
+	}
+
 	for name, task := range cfg.Tasks {
 		if strings.TrimSpace(task.Command) == "" {
 			return nil, fmt.Errorf("task %q has an empty command", name)

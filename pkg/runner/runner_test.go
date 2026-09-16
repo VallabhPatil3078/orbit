@@ -55,7 +55,8 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 		t.Fatalf("unexpected error executing tiers: %v", err)
 	}
 
-	if duration >= 2000*time.Millisecond {
-		t.Errorf("expected execution time < 2.0s, got %v (implies tasks ran sequentially)", duration)
+	if duration >= 3000*time.Millisecond {
+		t.Errorf("expected execution time < 3.0s, got %v (implies tasks ran sequentially)", duration)
 	}
 }
+

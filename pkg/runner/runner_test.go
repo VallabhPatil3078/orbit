@@ -15,7 +15,7 @@ func TestExecuteTiers_Success(t *testing.T) {
 		{node1, node2},
 	}
 
-	err := ExecuteTiers(tiers)
+	err := ExecuteTiers(tiers, nil, true)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -26,7 +26,7 @@ func TestExecuteTiers_Failure(t *testing.T) {
 	tiers := [][]*graph.Node{
 		{nodeFail},
 	}
-	err := ExecuteTiers(tiers)
+	err := ExecuteTiers(tiers, nil, true)
 	if err == nil {
 		t.Fatal("expected an error because the task fails, got nil")
 	}
@@ -48,7 +48,7 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 	}
 
 	start := time.Now()
-	err := ExecuteTiers(tiers)
+	err := ExecuteTiers(tiers, nil, true)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -59,5 +59,6 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 		t.Errorf("expected execution time < 3.0s, got %v (implies tasks ran sequentially)", duration)
 	}
 }
+
 
 

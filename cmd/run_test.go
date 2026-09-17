@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 )
 
@@ -24,7 +25,9 @@ func TestRunCmd_Success(t *testing.T) {
     depends_on: []
 `)
 	os.WriteFile("orbit.yaml", yamlContent, 0644)
+	exec.Command("git", "init").Run()
 
 	// Run the command
 	runCmd.Run(runCmd, []string{})
 }
+

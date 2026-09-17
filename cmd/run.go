@@ -1,22 +1,35 @@
-package cmd
+﻿package cmd
 
 import (
 	"fmt"
 	"os"
-	
+
 	"orbit/pkg/config"
+	"orbit/pkg/git"
 	"orbit/pkg/graph"
 	"orbit/pkg/runner"
 
 	"github.com/spf13/cobra"
 )
 
+var (
+	forceAll bool
+	baseRef  string
+)
+
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Executes the DAG pipeline",
-	Long:  `Parses orbit.yaml, builds the DAG, and executes the tasks concurrently.`,
+	Long: `Parses orbit.yaml, builds the DAG, and executes the tasks concurrently.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("-> Starting Orbit Pipeline...")
+
+		// 0. Get changed files
+		changedFiles, err := git.GetChangedFiles(baseRef)
+		if err != nil && !forceAll {
+			fmt.Printf("[!] Could not get changed files (run with --all to force): %v\n", err)
+			os.Exit(1)
+		}
 
 		// 1. Parse config
 		cfg, err := config.ParseConfig("orbit.yaml")
@@ -44,7 +57,7 @@ var runCmd = &cobra.Command{
 		}
 
 		// 4. Execute Tiers
-		if err := runner.ExecuteTiers(tiers); err != nil {
+		if err := runner.ExecuteTiers(tiers, changedFiles, forceAll); err != nil {
 			fmt.Printf("\n[X] Orbit pipeline failed!\n")
 			os.Exit(1)
 		}
@@ -54,6 +67,8 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
+	runCmd.Flags().BoolVar(&forceAll, "all", false, "Force run all tasks regardless of path filters")
+	runCmd.Flags().StringVar(&baseRef, "base", "", "Base git ref to compare against (e.g. main) for path filters")
 	rootCmd.AddCommand(runCmd)
 }
 

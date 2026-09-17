@@ -2,12 +2,16 @@ tasks:
   lint:
     command: "echo Linting code..."
     depends_on: []
+    trigger_paths: ["**/*.go"]
   format:
     command: "echo Formatting code..."
     depends_on: []
+    trigger_paths: ["**/*.go"]
   build:
     command: "echo Building binary..."
     depends_on: ["lint", "format"]
+    trigger_paths: ["**/*.go", "go.mod", "go.sum"]
   test:
     command: "echo Running tests..."
     depends_on: ["build"]
+    trigger_paths: ["**/*.go"]

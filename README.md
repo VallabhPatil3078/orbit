@@ -1,4 +1,4 @@
-﻿# Orbit 🪐
+# Orbit 🪐
 ![CI](https://github.com/VallabhPatil3078/orbit/actions/workflows/ci.yml/badge.svg)
 
 **Orbit** is a localized, high-performance DAG-based task orchestrator designed to act as an instant CI/CD gatekeeper for your Git commits. 
@@ -14,6 +14,7 @@ By intercepting Git hooks (like pre-commit), Orbit intelligently schedules valid
 ## Features
 - **DAG Engine:** Parses tasks using Topological Sort (Kahn's algorithm).
 - **Maximum Concurrency:** Independent tasks run in parallel using Go Goroutines.
+- **Smart Path Filtering:** Automatically skips tasks if relevant files haven't changed, saving precious execution time.
 - **Zero-Dependency:** A single Go binary that doesn't bloat your project repository.
 - **Git Hook Integration:** Automatically intercepts commits to prevent broken code from being pushed.
 
@@ -35,18 +36,21 @@ Orbit comes with a few built-in commands to manage your pipelines:
 ## How it works
 Orbit looks for an orbit.yaml file in the root of your project:
 
-``yaml
+```yaml
 tasks:
   lint:
     command: "npm run lint"
     depends_on: []
+    trigger_paths: ["**/*.js", "**/*.ts"] # Only run if JS/TS files change
   format:
     command: "prettier --write ."
     depends_on: []
+    ignore_paths: ["vendor/**", "node_modules/**"] # Skip if changes are in these directories
   build:
     command: "npm run build"
+    working_dir: "./frontend" # Execute command in a specific directory
     depends_on: ["lint", "format"] # Build waits until lint and format finish
-``
+```
 
 Behind the scenes, Orbit groups the tasks into dependent "Tiers" and processes them exactly like this:
 

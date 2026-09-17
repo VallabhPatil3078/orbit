@@ -22,7 +22,8 @@ var runCmd = &cobra.Command{
 	Short: "Executes the DAG pipeline",
 	Long: `Parses orbit.yaml, builds the DAG, and executes the tasks concurrently.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("-> Starting Orbit Pipeline...")
+		rep := &runner.TextReporter{}
+		rep.PipelineStarted()
 
 		// 0. Get changed files
 		changedFiles, err := git.GetChangedFiles(baseRef)
@@ -57,12 +58,12 @@ var runCmd = &cobra.Command{
 		}
 
 		// 4. Execute Tiers
-		if err := runner.ExecuteTiers(tiers, changedFiles, forceAll, baseRef); err != nil {
-			fmt.Printf("\n[X] Orbit pipeline failed!\n")
+		if err := runner.ExecuteTiers(tiers, changedFiles, forceAll, baseRef, rep); err != nil {
+			rep.PipelineFinished(false)
 			os.Exit(1)
 		}
 
-		fmt.Println("\n-> Orbit pipeline completed successfully!")
+		rep.PipelineFinished(true)
 	},
 }
 

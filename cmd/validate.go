@@ -1,4 +1,4 @@
-﻿package cmd
+package cmd
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"orbit/pkg/config"
 	"orbit/pkg/graph"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +24,18 @@ var validateCmd = &cobra.Command{
 
 		dag := graph.NewDAG()
 		for name, task := range cfg.Tasks {
+			for _, pat := range task.TriggerPaths {
+				if _, err := doublestar.Match(pat, "test"); err != nil {
+					fmt.Printf("[X] Task %q has invalid trigger path pattern %q: %v\n", name, pat, err)
+					os.Exit(1)
+				}
+			}
+			for _, pat := range task.IgnorePaths {
+				if _, err := doublestar.Match(pat, "test"); err != nil {
+					fmt.Printf("[X] Task %q has invalid ignore path pattern %q: %v\n", name, pat, err)
+					os.Exit(1)
+				}
+			}
 			dag.AddNode(name, task.Command, task.WorkingDir, task.DependsOn, task.TriggerPaths, task.IgnorePaths)
 		}
 

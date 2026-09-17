@@ -3,6 +3,7 @@ package graph
 import (
 	"errors"
 	"fmt"
+	"sort"
 )
 
 // Node represents a task in the DAG.
@@ -72,6 +73,10 @@ func (g *DAG) TopologicalSort() ([][]*Node, error) {
 	processedCount := 0
 
 	for len(currentTier) > 0 {
+		sort.Slice(currentTier, func(i, j int) bool {
+			return currentTier[i].Name < currentTier[j].Name
+		})
+
 		tiers = append(tiers, currentTier)
 		processedCount += len(currentTier)
 

@@ -43,16 +43,16 @@ This is backwards for a child with multiple parents that have different trigger 
 **The problem:** `skip_test.go` verifies skip/run behavior by pattern-matching the *exact printed strings* Orbit emits today — `"[-] Task '" + task + "' skipped"` and `"[V] Task '" + task + "' finished"`. The implementation plan changes these to `"  - %s (skipped: ...)"` and `"  ✔ %s (completed)"` but never mentions updating the tests. If you implement the plan as written, `skip_test.go` goes red the moment you change the print statements — not because skip logic broke, but because the test's only way of checking behavior is scraping stdout text that the plan is about to change out from under it.
 
 **Fix to implement:**
-- [ ] Before changing any print statements, update `skip_test.go`'s assertions to match the new output strings (or, better — see B4 below — stop asserting on printed text at all).
-- [ ] Treat this as step 1, not an afterthought — "does the test suite still pass" should gate this change, not follow it.
+- [x] Before changing any print statements, update `skip_test.go`'s assertions to match the new output strings (or, better — see B4 below — stop asserting on printed text at all).
+- [x] Treat this as step 1, not an afterthought — "does the test suite still pass" should gate this change, not follow it.
 
 ### B2. Non-deterministic task ordering will undermine the exact "premium" feel you're going for
 
 **The problem, unrelated to the logging plan itself but exposed by it:** `dag.go` builds each tier by iterating `g.Nodes`, which is a Go map — iteration order is randomized per run. That means the new `[ Orbit ] Running format, lint...` header (and the order checkmarks print in) will vary from run to run: sometimes `format, lint`, sometimes `lint, format`. The current boring `Executing Tier 0 (2 tasks)...` line never showed task names, so this was invisible before. The new format puts task names front and center, which makes the flakiness visible for the first time — and inconsistent ordering is exactly the kind of thing that makes a CLI feel janky rather than premium, which undercuts the stated goal.
 
 **Fix to implement (`pkg/graph/dag.go`):**
-- [ ] Sort nodes alphabetically by name (or another stable rule) when building each tier in `TopologicalSort`, so both the "Running X, Y..." header and the per-task result lines print in a consistent order across runs.
-- [ ] Do this before or alongside the logging change — implementing the new format on top of non-deterministic ordering means you'll ship the "premium" output and then immediately notice it looks different every time you run it.
+- [x] Sort nodes alphabetically by name (or another stable rule) when building each tier in `TopologicalSort`, so both the "Running X, Y..." header and the per-task result lines print in a consistent order across runs.
+- [x] Do this before or alongside the logging change — implementing the new format on top of non-deterministic ordering means you'll ship the "premium" output and then immediately notice it looks different every time you run it.
 
 ### B3. Emoji/Unicode symbols on Windows need an explicit check, not an assumption
 
@@ -62,17 +62,17 @@ This is backwards for a child with multiple parents that have different trigger 
 - Have you actually run this in a plain Windows `cmd.exe` window (not Windows Terminal) to confirm the symbols render? If not, that's a five-minute check worth doing before committing to Unicode icons as the default.
 
 **Fix to implement:**
-- [ ] Test the proposed output in both Windows Terminal and legacy `cmd.exe`.
-- [ ] If legacy rendering is broken, either set the UTF-8 code page programmatically on Windows startup, or fall back to ASCII (`[OK]`/`[FAIL]`/`[SKIP]`) when `runtime.GOOS == "windows"` and no UTF-8 support is detected.
+- [x] Test the proposed output in both Windows Terminal and legacy `cmd.exe`.
+- [x] If legacy rendering is broken, either set the UTF-8 code page programmatically on Windows startup, or fall back to ASCII (`[OK]`/`[FAIL]`/`[SKIP]`) when `runtime.GOOS == "windows"` and no UTF-8 support is detected.
 
 ### B4. Bigger architectural suggestion — decouple output formatting from execution logic now
 
 **Why this matters beyond just this change:** your own plan asks "should we use spinners later (pterm/huh)?" as an open question. Right now, `runner.go` prints directly via `fmt.Printf` inline with execution logic, and your tests verify behavior by capturing and parsing stdout (`skip_test.go`'s `os.Pipe()` redirect). That means *every* future output change — spinners, `--quiet` mode, JSON output for CI, this logging revamp itself — has to touch `runner.go`'s core logic and risks breaking tests that were never meant to be about formatting.
 
 **Suggested fix (bigger than this one plan, worth deciding now rather than after a third output revamp):**
-- [ ] Introduce a small `Reporter` interface (`TaskStarted`, `TaskSkipped(reason)`, `TaskSucceeded`, `TaskFailed(output)`, `TierStarted(names)`) that `ExecuteTiers` calls into instead of printing directly.
-- [ ] Ship one `TextReporter` implementation now with the format from this plan. This costs you maybe an extra hour today, and it's what makes B3's Windows fallback and a future spinner/JSON reporter each a new implementation of the interface rather than a rewrite of `runner.go`.
-- [ ] Update tests to assert against a `TaskResult`/`Status` struct (which already exists) or a mock `Reporter`'s recorded calls, instead of parsing printed strings — this is what actually fixes the fragility that made B1 possible in the first place, not just this one instance of it.
+- [x] Introduce a small `Reporter` interface (`TaskStarted`, `TaskSkipped(reason)`, `TaskSucceeded`, `TaskFailed(output)`, `TierStarted(names)`) that `ExecuteTiers` calls into instead of printing directly.
+- [x] Ship one `TextReporter` implementation now with the format from this plan. This costs you maybe an extra hour today, and it's what makes B3's Windows fallback and a future spinner/JSON reporter each a new implementation of the interface rather than a rewrite of `runner.go`.
+- [x] Update tests to assert against a `TaskResult`/`Status` struct (which already exists) or a mock `Reporter`'s recorded calls, instead of parsing printed strings — this is what actually fixes the fragility that made B1 possible in the first place, not just this one instance of it.
 
 ---
 

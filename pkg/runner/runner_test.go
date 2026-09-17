@@ -15,7 +15,8 @@ func TestExecuteTiers_Success(t *testing.T) {
 		{node1, node2},
 	}
 
-	err := ExecuteTiers(tiers, nil, true, "")
+	rep := NewMockReporter()
+	err := ExecuteTiers(tiers, nil, true, "", rep)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -26,7 +27,8 @@ func TestExecuteTiers_Failure(t *testing.T) {
 	tiers := [][]*graph.Node{
 		{nodeFail},
 	}
-	err := ExecuteTiers(tiers, nil, true, "")
+	rep := NewMockReporter()
+	err := ExecuteTiers(tiers, nil, true, "", rep)
 	if err == nil {
 		t.Fatal("expected an error because the task fails, got nil")
 	}
@@ -48,7 +50,8 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 	}
 
 	start := time.Now()
-	err := ExecuteTiers(tiers, nil, true, "")
+	rep := NewMockReporter()
+	err := ExecuteTiers(tiers, nil, true, "", rep)
 	duration := time.Since(start)
 
 	if err != nil {

@@ -1,19 +1,11 @@
 package runner
 
 import (
-	"bytes"
-	"io"
-	"os"
-	"strings"
 	"testing"
 	"orbit/pkg/graph"
 )
 
 func TestExecuteTiers_SkipLogic(t *testing.T) {
-	// Task A: trigger on src/**
-	// Task B: depends on A, no own triggers (should cascade skip if A skipped)
-	// Task C: depends on A, but has own triggers test/** (evaluates independently)
-	
 	nodeA := &graph.Node{
 		Name:         "A",
 		Command:      "echo A",
@@ -81,43 +73,29 @@ func TestExecuteTiers_SkipLogic(t *testing.T) {
 	
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Redirect stdout
-			oldStdout := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			err := ExecuteTiers(tiers, tc.changedFiles, tc.forceAll, "")
+			rep := NewMockReporter()
+			err := ExecuteTiers(tiers, tc.changedFiles, tc.forceAll, "", rep)
 			if err != nil {
 				t.Fatalf("ExecuteTiers failed: %v", err)
 			}
 
-			w.Close()
-			os.Stdout = oldStdout
-			
-			var buf bytes.Buffer
-			io.Copy(&buf, r)
-			out := buf.String()
-
 			for task, shouldSkip := range tc.expectedSkip {
-				skipMsg := "[-] Task '" + task + "' skipped"
-				runMsg := "[V] Task '" + task + "' finished"
-				
-				hasSkip := strings.Contains(out, skipMsg)
-				hasRun := strings.Contains(out, runMsg)
+				hasSkip := rep.SkippedTasks[task]
+				hasRun := rep.SucceededTasks[task]
 				
 				if shouldSkip {
 					if !hasSkip {
-						t.Errorf("Expected task %s to skip, but it did not.\nOutput:\n%s", task, out)
+						t.Errorf("Expected task %s to skip, but it did not.", task)
 					}
 					if hasRun {
-						t.Errorf("Expected task %s to skip, but it ran.\nOutput:\n%s", task, out)
+						t.Errorf("Expected task %s to skip, but it ran.", task)
 					}
 				} else {
 					if !hasRun {
-						t.Errorf("Expected task %s to run, but it did not.\nOutput:\n%s", task, out)
+						t.Errorf("Expected task %s to run, but it did not.", task)
 					}
 					if hasSkip {
-						t.Errorf("Expected task %s to run, but it skipped.\nOutput:\n%s", task, out)
+						t.Errorf("Expected task %s to run, but it skipped.", task)
 					}
 				}
 			}
@@ -132,40 +110,20 @@ func TestExecuteTiers_MultiParentSkip(t *testing.T) {
 	
 	tiers := [][]*graph.Node{{nodeX, nodeY}, {nodeChild}}
 
-	// If only X runs, Child should run
 	t.Run("Only X runs", func(t *testing.T) {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		rep := NewMockReporter()
+		ExecuteTiers(tiers, []string{"main.go"}, false, "", rep)
 
-		ExecuteTiers(tiers, []string{"main.go"}, false, "")
-
-		w.Close()
-		os.Stdout = oldStdout
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		out := buf.String()
-
-		if strings.Contains(out, "[-] Task 'Child' skipped") {
+		if rep.SkippedTasks["Child"] {
 			t.Errorf("Child should not skip when one parent (X) runs")
 		}
 	})
 	
-	// If both X and Y skip, Child should skip
 	t.Run("Both X and Y skip", func(t *testing.T) {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		rep := NewMockReporter()
+		ExecuteTiers(tiers, []string{"unrelated.txt"}, false, "", rep)
 
-		ExecuteTiers(tiers, []string{"unrelated.txt"}, false, "")
-
-		w.Close()
-		os.Stdout = oldStdout
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		out := buf.String()
-
-		if !strings.Contains(out, "[-] Task 'Child' skipped") {
+		if !rep.SkippedTasks["Child"] {
 			t.Errorf("Child should skip when all parents skip")
 		}
 	})
@@ -176,37 +134,19 @@ func TestExecuteTiers_BothFilters(t *testing.T) {
 	tiers := [][]*graph.Node{{nodeA}}
 
 	t.Run("Trigger but ignored", func(t *testing.T) {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		rep := NewMockReporter()
+		ExecuteTiers(tiers, []string{"vendor/main.go"}, false, "", rep)
 
-		ExecuteTiers(tiers, []string{"vendor/main.go"}, false, "")
-
-		w.Close()
-		os.Stdout = oldStdout
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		out := buf.String()
-
-		if !strings.Contains(out, "[-] Task 'A' skipped") {
+		if !rep.SkippedTasks["A"] {
 			t.Errorf("Task should skip if file is ignored")
 		}
 	})
 	
 	t.Run("Trigger not ignored", func(t *testing.T) {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		rep := NewMockReporter()
+		ExecuteTiers(tiers, []string{"src/main.go"}, false, "", rep)
 
-		ExecuteTiers(tiers, []string{"src/main.go"}, false, "")
-
-		w.Close()
-		os.Stdout = oldStdout
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		out := buf.String()
-
-		if strings.Contains(out, "[-] Task 'A' skipped") {
+		if rep.SkippedTasks["A"] {
 			t.Errorf("Task should run if file is triggered and not ignored")
 		}
 	})

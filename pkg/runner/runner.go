@@ -26,7 +26,7 @@ type TaskResult struct {
 	Status TaskStatus
 }
 
-func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string) error {
+func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter) error {
 	skipStates := make(map[string]bool)
 
 	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
@@ -35,7 +35,13 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 	}
 
 	for i, tier := range tiers {
-		fmt.Printf("Executing Tier %d (%d tasks)...\n", i, len(tier))
+		if rep != nil {
+			var taskNames []string
+			for _, node := range tier {
+				taskNames = append(taskNames, node.Name)
+			}
+			rep.TierStarted(i, taskNames)
+		}
 
 		var wg sync.WaitGroup
 		results := make(chan TaskResult, len(tier))
@@ -119,6 +125,10 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 				cmd.Stdout = &outBuf
 				cmd.Stderr = &outBuf
 
+				if rep != nil {
+					rep.TaskStarted(n.Name)
+				}
+
 				err := cmd.Run()
 				status := StatusSuccess
 				if err != nil {
@@ -131,18 +141,30 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 		wg.Wait()
 		close(results)
 
-		var tierErrors []error
+		resMap := make(map[string]TaskResult)
 		for res := range results {
+			resMap[res.Node.Name] = res
+		}
+
+		var tierErrors []error
+		for _, node := range tier {
+			res := resMap[node.Name]
 			if res.Status == StatusSkipped {
 				skipStates[res.Node.Name] = true
-				fmt.Printf("[-] Task '%s' skipped (No relevant files changed).\n", res.Node.Name)
+				if rep != nil {
+					rep.TaskSkipped(res.Node.Name, "no relevant files changed")
+				}
 			} else if res.Status == StatusFailed {
 				skipStates[res.Node.Name] = false
-				fmt.Printf("\n[X] Task '%s' failed:\n%s\n", res.Node.Name, res.Output)
+				if rep != nil {
+					rep.TaskFailed(res.Node.Name, res.Output)
+				}
 				tierErrors = append(tierErrors, fmt.Errorf("task %s failed", res.Node.Name))
 			} else {
 				skipStates[res.Node.Name] = false
-				fmt.Printf("[V] Task '%s' finished successfully.\n", res.Node.Name)
+				if rep != nil {
+					rep.TaskSucceeded(res.Node.Name)
+				}
 			}
 		}
 

@@ -23,7 +23,7 @@ var validateCmd = &cobra.Command{
 
 		dag := graph.NewDAG()
 		for name, task := range cfg.Tasks {
-			dag.AddNode(name, task.Command, task.DependsOn)
+			dag.AddNode(name, task.Command, task.WorkingDir, task.DependsOn, task.TriggerPaths, task.IgnorePaths)
 		}
 
 		if err := dag.BuildEdges(); err != nil {
@@ -44,3 +44,6 @@ var validateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(validateCmd)
 }
+
+
+

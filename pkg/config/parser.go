@@ -1,4 +1,4 @@
-﻿package config
+package config
 
 import (
 	"fmt"
@@ -9,8 +9,11 @@ import (
 )
 
 type TaskConfig struct {
-	Command   string   `yaml:"command"`
-	DependsOn []string `yaml:"depends_on"`
+	Command      string   `yaml:"command"`
+	WorkingDir   string   `yaml:"working_dir"`
+	DependsOn    []string `yaml:"depends_on"`
+	TriggerPaths []string `yaml:"trigger_paths"`
+	IgnorePaths  []string `yaml:"ignore_paths"`
 }
 
 type OrbitConfig struct {
@@ -45,3 +48,4 @@ func ParseConfig(filepath string) (*OrbitConfig, error) {
 
 	return &cfg, nil
 }
+

@@ -28,7 +28,7 @@ var runCmd = &cobra.Command{
 		// 2. Build DAG
 		dag := graph.NewDAG()
 		for name, taskCfg := range cfg.Tasks {
-			dag.AddNode(name, taskCfg.Command, taskCfg.DependsOn)
+			dag.AddNode(name, taskCfg.Command, taskCfg.WorkingDir, taskCfg.DependsOn, taskCfg.TriggerPaths, taskCfg.IgnorePaths)
 		}
 
 		if err := dag.BuildEdges(); err != nil {
@@ -56,3 +56,4 @@ var runCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runCmd)
 }
+

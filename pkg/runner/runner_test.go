@@ -1,4 +1,4 @@
-﻿package runner
+package runner
 
 import (
 	"orbit/pkg/graph"
@@ -59,4 +59,5 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 		t.Errorf("expected execution time < 3.0s, got %v (implies tasks ran sequentially)", duration)
 	}
 }
+
 

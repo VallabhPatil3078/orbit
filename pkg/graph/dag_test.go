@@ -1,4 +1,4 @@
-﻿package graph
+package graph
 
 import (
 	"strings"
@@ -7,10 +7,10 @@ import (
 
 func TestTopologicalSort_Success(t *testing.T) {
 	dag := NewDAG()
-	dag.AddNode("lint", "npm run lint", []string{})
-	dag.AddNode("format", "prettier", []string{})
-	dag.AddNode("build", "npm run build", []string{"lint", "format"})
-	dag.AddNode("test", "npm run test", []string{"build"})
+	dag.AddNode("lint", "npm run lint", "", []string{}, nil, nil)
+	dag.AddNode("format", "prettier", "", []string{}, nil, nil)
+	dag.AddNode("build", "npm run build", "", []string{"lint", "format"}, nil, nil)
+	dag.AddNode("test", "npm run test", "", []string{"build"}, nil, nil)
 
 	err := dag.BuildEdges()
 	if err != nil {
@@ -41,8 +41,8 @@ func TestTopologicalSort_Success(t *testing.T) {
 
 func TestTopologicalSort_Cycle(t *testing.T) {
 	dag := NewDAG()
-	dag.AddNode("taskA", "echo A", []string{"taskB"})
-	dag.AddNode("taskB", "echo B", []string{"taskA"})
+	dag.AddNode("taskA", "echo A", "", []string{"taskB"}, nil, nil)
+	dag.AddNode("taskB", "echo B", "", []string{"taskA"}, nil, nil)
 
 	err := dag.BuildEdges()
 	if err != nil {
@@ -57,7 +57,7 @@ func TestTopologicalSort_Cycle(t *testing.T) {
 
 func TestBuildEdges_MissingDependency(t *testing.T) {
 	dag := NewDAG()
-	dag.AddNode("build", "npm run build", []string{"lnit"}) // intentional typo
+	dag.AddNode("build", "npm run build", "", []string{"lnit"}, nil, nil) // intentional typo
 
 	err := dag.BuildEdges()
 	if err == nil {
@@ -71,10 +71,10 @@ func TestBuildEdges_MissingDependency(t *testing.T) {
 
 func TestTopologicalSort_Diamond(t *testing.T) {
 	dag := NewDAG()
-	dag.AddNode("A", "echo A", []string{})
-	dag.AddNode("B", "echo B", []string{"A"})
-	dag.AddNode("C", "echo C", []string{"A"})
-	dag.AddNode("D", "echo D", []string{"B", "C"})
+	dag.AddNode("A", "echo A", "", []string{}, nil, nil)
+	dag.AddNode("B", "echo B", "", []string{"A"}, nil, nil)
+	dag.AddNode("C", "echo C", "", []string{"A"}, nil, nil)
+	dag.AddNode("D", "echo D", "", []string{"B", "C"}, nil, nil)
 
 	err := dag.BuildEdges()
 	if err != nil {
@@ -105,3 +105,4 @@ func TestTopologicalSort_Diamond(t *testing.T) {
 		t.Errorf("expected tier 2 to have [D]")
 	}
 }
+

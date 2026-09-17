@@ -1,4 +1,4 @@
-﻿package graph
+package graph
 
 import (
 	"errors"
@@ -7,10 +7,13 @@ import (
 
 // Node represents a task in the DAG.
 type Node struct {
-	Name      string
-	Command   string
-	DependsOn []string
-	InDegree  int
+	Name         string
+	Command      string
+	WorkingDir   string
+	DependsOn    []string
+	TriggerPaths []string
+	IgnorePaths  []string
+	InDegree     int
 }
 
 // DAG represents the Directed Acyclic Graph.
@@ -28,12 +31,15 @@ func NewDAG() *DAG {
 }
 
 // AddNode adds a task to the DAG.
-func (g *DAG) AddNode(name, command string, dependsOn []string) {
+func (g *DAG) AddNode(name, command, workingDir string, dependsOn, triggerPaths, ignorePaths []string) {
 	g.Nodes[name] = &Node{
-		Name:      name,
-		Command:   command,
-		DependsOn: dependsOn,
-		InDegree:  0,
+		Name:         name,
+		Command:      command,
+		WorkingDir:   workingDir,
+		DependsOn:    dependsOn,
+		TriggerPaths: triggerPaths,
+		IgnorePaths:  ignorePaths,
+		InDegree:     0,
 	}
 }
 
@@ -89,3 +95,4 @@ func (g *DAG) TopologicalSort() ([][]*Node, error) {
 
 	return tiers, nil
 }
+

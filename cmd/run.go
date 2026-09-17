@@ -1,4 +1,4 @@
-﻿package cmd
+package cmd
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ var runCmd = &cobra.Command{
 		}
 
 		// 4. Execute Tiers
-		if err := runner.ExecuteTiers(tiers, changedFiles, forceAll); err != nil {
+		if err := runner.ExecuteTiers(tiers, changedFiles, forceAll, baseRef); err != nil {
 			fmt.Printf("\n[X] Orbit pipeline failed!\n")
 			os.Exit(1)
 		}

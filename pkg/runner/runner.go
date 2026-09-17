@@ -26,8 +26,13 @@ type TaskResult struct {
 	Status TaskStatus
 }
 
-func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool) error {
+func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string) error {
 	skipStates := make(map[string]bool)
+
+	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
+		fmt.Println("[!] No staged changes detected — running all tasks as a fallback.")
+		forceAll = true
+	}
 
 	for i, tier := range tiers {
 		fmt.Printf("Executing Tier %d (%d tasks)...\n", i, len(tier))
@@ -49,7 +54,10 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool) e
 						for _, file := range changedFiles {
 							ignored := false
 							for _, ignoreGlob := range n.IgnorePaths {
-								match, _ := doublestar.Match(ignoreGlob, file)
+								match, err := doublestar.Match(ignoreGlob, file)
+								if err != nil {
+									fmt.Printf("[!] Warning: invalid ignore path pattern %q: %v\n", ignoreGlob, err)
+								}
 								if match {
 									ignored = true
 									break
@@ -65,7 +73,10 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool) e
 							}
 							
 							for _, triggerGlob := range n.TriggerPaths {
-								match, _ := doublestar.Match(triggerGlob, file)
+								match, err := doublestar.Match(triggerGlob, file)
+								if err != nil {
+									fmt.Printf("[!] Warning: invalid trigger path pattern %q: %v\n", triggerGlob, err)
+								}
 								if match {
 									shouldSkip = false
 									break
@@ -76,11 +87,15 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool) e
 							}
 						}
 					} else {
-						for _, dep := range n.DependsOn {
-							if skipStates[dep] {
-								shouldSkip = true
-								break
+						if len(n.DependsOn) > 0 {
+							allSkipped := true
+							for _, dep := range n.DependsOn {
+								if !skipStates[dep] {
+									allSkipped = false
+									break
+								}
 							}
+							shouldSkip = allSkipped
 						}
 					}
 				}

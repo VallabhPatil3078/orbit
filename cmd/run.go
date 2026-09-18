@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"orbit/pkg/config"
-	"orbit/pkg/git"
-	"orbit/pkg/graph"
-	"orbit/pkg/runner"
+	"github.com/VallabhPatil3078/orbit/pkg/config"
+	"github.com/VallabhPatil3078/orbit/pkg/git"
+	"github.com/VallabhPatil3078/orbit/pkg/graph"
+	"github.com/VallabhPatil3078/orbit/pkg/runner"
 
 	"github.com/spf13/cobra"
 )

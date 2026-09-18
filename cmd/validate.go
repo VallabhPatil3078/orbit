@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"orbit/pkg/config"
-	"orbit/pkg/graph"
+	"github.com/VallabhPatil3078/orbit/pkg/config"
+	"github.com/VallabhPatil3078/orbit/pkg/graph"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/cobra"

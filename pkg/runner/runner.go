@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"orbit/pkg/graph"
+	"github.com/VallabhPatil3078/orbit/pkg/graph"
 	"github.com/bmatcuk/doublestar/v4"
 )
 

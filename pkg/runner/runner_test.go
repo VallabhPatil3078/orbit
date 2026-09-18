@@ -2,7 +2,7 @@ package runner
 
 import (
 	"context"
-	"orbit/pkg/graph"
+	"github.com/VallabhPatil3078/orbit/pkg/graph"
 	"runtime"
 	"testing"
 	"time"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"orbit/pkg/graph"
+	"github.com/VallabhPatil3078/orbit/pkg/graph"
 )
 
 func TestExecuteTiers_SkipLogic(t *testing.T) {

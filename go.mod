@@ -1,4 +1,4 @@
-module orbit
+module github.com/VallabhPatil3078/orbit
 
 go 1.22.0
 

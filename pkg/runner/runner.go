@@ -31,7 +31,7 @@ type TaskResult struct {
 	Status TaskStatus
 }
 
-func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter) error {
+func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter, taskTimeout time.Duration) error {
 	skipStates := make(map[string]bool)
 
 	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
@@ -119,7 +119,7 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 					return
 				}
 
-				taskCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+				taskCtx, cancel := context.WithTimeout(ctx, taskTimeout)
 				defer cancel()
 
 				var cmd *exec.Cmd

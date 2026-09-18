@@ -3,6 +3,8 @@ package runner
 import (
 	"context"
 	"testing"
+	"time"
+
 	"orbit/pkg/graph"
 )
 
@@ -75,7 +77,7 @@ func TestExecuteTiers_SkipLogic(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			rep := NewMockReporter()
-			err := ExecuteTiers(context.Background(), tiers, tc.changedFiles, tc.forceAll, "", rep)
+			err := ExecuteTiers(context.Background(), tiers, tc.changedFiles, tc.forceAll, "", rep, 10*time.Minute)
 			if err != nil {
 				t.Fatalf("ExecuteTiers failed: %v", err)
 			}
@@ -113,7 +115,7 @@ func TestExecuteTiers_MultiParentSkip(t *testing.T) {
 
 	t.Run("Only X runs", func(t *testing.T) {
 		rep := NewMockReporter()
-		ExecuteTiers(context.Background(), tiers, []string{"main.go"}, false, "", rep)
+		ExecuteTiers(context.Background(), tiers, []string{"main.go"}, false, "", rep, 10*time.Minute)
 
 		if rep.SkippedTasks["Child"] {
 			t.Errorf("Child should not skip when one parent (X) runs")
@@ -122,7 +124,7 @@ func TestExecuteTiers_MultiParentSkip(t *testing.T) {
 	
 	t.Run("Both X and Y skip", func(t *testing.T) {
 		rep := NewMockReporter()
-		ExecuteTiers(context.Background(), tiers, []string{"unrelated.txt"}, false, "", rep)
+		ExecuteTiers(context.Background(), tiers, []string{"unrelated.txt"}, false, "", rep, 10*time.Minute)
 
 		if !rep.SkippedTasks["Child"] {
 			t.Errorf("Child should skip when all parents skip")
@@ -136,7 +138,7 @@ func TestExecuteTiers_BothFilters(t *testing.T) {
 
 	t.Run("Trigger but ignored", func(t *testing.T) {
 		rep := NewMockReporter()
-		ExecuteTiers(context.Background(), tiers, []string{"vendor/main.go"}, false, "", rep)
+		ExecuteTiers(context.Background(), tiers, []string{"vendor/main.go"}, false, "", rep, 10*time.Minute)
 
 		if !rep.SkippedTasks["A"] {
 			t.Errorf("Task should skip if file is ignored")
@@ -145,7 +147,7 @@ func TestExecuteTiers_BothFilters(t *testing.T) {
 	
 	t.Run("Trigger not ignored", func(t *testing.T) {
 		rep := NewMockReporter()
-		ExecuteTiers(context.Background(), tiers, []string{"src/main.go"}, false, "", rep)
+		ExecuteTiers(context.Background(), tiers, []string{"src/main.go"}, false, "", rep, 10*time.Minute)
 
 		if rep.SkippedTasks["A"] {
 			t.Errorf("Task should run if file is triggered and not ignored")

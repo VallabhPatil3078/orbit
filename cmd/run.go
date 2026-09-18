@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"orbit/pkg/config"
 	"orbit/pkg/git"
@@ -68,7 +69,7 @@ var runCmd = &cobra.Command{
 		}
 
 		// 4. Execute Tiers
-		if err := runner.ExecuteTiers(ctx, tiers, changedFiles, forceAll, baseRef, rep); err != nil {
+		if err := runner.ExecuteTiers(ctx, tiers, changedFiles, forceAll, baseRef, rep, 10*time.Minute); err != nil {
 			rep.PipelineFinished(false)
 			if err == runner.ErrTaskTimeout {
 				os.Exit(4) // Exit 4 for Timeout

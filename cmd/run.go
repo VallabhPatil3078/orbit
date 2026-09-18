@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"orbit/pkg/config"
 	"orbit/pkg/git"
@@ -25,7 +26,7 @@ var runCmd = &cobra.Command{
 	Short: "Executes the DAG pipeline",
 	Long: `Parses orbit.yaml, builds the DAG, and executes the tasks concurrently.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
 		var rep runner.Reporter = &runner.TextReporter{}

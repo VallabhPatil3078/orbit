@@ -1,6 +1,8 @@
 # Orbit 🪐
 ![CI](https://github.com/VallabhPatil3078/orbit/actions/workflows/ci.yml/badge.svg)
 
+*(Note for contributors: When cutting a release, ensure the CI workflow is green on `main` before pushing a `v*` tag. The release workflow relies on the existing state of the codebase.)*
+
 **Orbit** is a localized, high-performance DAG-based task orchestrator designed to act as an instant CI/CD gatekeeper for your Git commits. 
 
 By intercepting Git hooks (like pre-commit), Orbit intelligently schedules validation checks—such as formatters, linters, and unit tests. Instead of naive parallel execution, Orbit parses task configurations into a Directed Acyclic Graph (DAG), maximizing CPU efficiency by executing independent tasks concurrently while strictly enforcing execution order for dependent tasks.

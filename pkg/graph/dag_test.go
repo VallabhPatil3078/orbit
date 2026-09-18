@@ -106,3 +106,22 @@ func TestTopologicalSort_Diamond(t *testing.T) {
 	}
 }
 
+func TestAddNode_InvalidTimeout(t *testing.T) {
+	dag := NewDAG()
+
+	err := dag.AddNode("task_neg", "echo", "", nil, nil, nil, "-5s")
+	if err == nil {
+		t.Errorf("expected error for negative timeout")
+	}
+
+	err = dag.AddNode("task_zero", "echo", "", nil, nil, nil, "0s")
+	if err == nil {
+		t.Errorf("expected error for zero timeout")
+	}
+
+	err = dag.AddNode("task_invalid", "echo", "", nil, nil, nil, "soon")
+	if err == nil {
+		t.Errorf("expected error for unparseable timeout string")
+	}
+}
+

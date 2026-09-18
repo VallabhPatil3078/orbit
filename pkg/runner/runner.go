@@ -31,7 +31,7 @@ type TaskResult struct {
 	Status TaskStatus
 }
 
-func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter, taskTimeout time.Duration) error {
+func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter, taskTimeout time.Duration, taskGracePeriod time.Duration) error {
 	skipStates := make(map[string]bool)
 
 	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
@@ -124,9 +124,9 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 
 				var cmd *exec.Cmd
 				if runtime.GOOS == "windows" {
-					cmd = exec.CommandContext(taskCtx, "cmd", "/C", n.Command)
+					cmd = exec.Command("cmd", "/C", n.Command)
 				} else {
-					cmd = exec.CommandContext(taskCtx, "sh", "-c", n.Command)
+					cmd = exec.Command("sh", "-c", n.Command)
 				}
 				if n.WorkingDir != "" {
 					cmd.Dir = n.WorkingDir
@@ -136,12 +136,31 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 				cmd.Stdout = &outBuf
 				cmd.Stderr = &outBuf
 
-				err := cmd.Run()
+				pt := NewProcessTree(cmd)
+				err := pt.Start()
+				
+				var waitErr error
+				if err == nil {
+					done := make(chan struct{})
+					go func() {
+						select {
+						case <-taskCtx.Done():
+							pt.Kill(taskGracePeriod)
+						case <-done:
+						}
+					}()
+					
+					waitErr = pt.Wait()
+					close(done)
+				} else {
+					waitErr = err
+				}
+
 				status := StatusSuccess
-				if err != nil {
+				if waitErr != nil {
 					status = StatusFailed
 				}
-				results <- TaskResult{Node: n, Output: outBuf.String(), Error: err, CtxErr: taskCtx.Err(), Status: status}
+				results <- TaskResult{Node: n, Output: outBuf.String(), Error: waitErr, CtxErr: taskCtx.Err(), Status: status}
 			}(node)
 		}
 

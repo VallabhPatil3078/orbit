@@ -69,7 +69,7 @@ var runCmd = &cobra.Command{
 		}
 
 		// 4. Execute Tiers
-		if err := runner.ExecuteTiers(ctx, tiers, changedFiles, forceAll, baseRef, rep, 10*time.Minute); err != nil {
+		if err := runner.ExecuteTiers(ctx, tiers, changedFiles, forceAll, baseRef, rep, 10*time.Minute, 5*time.Second); err != nil {
 			rep.PipelineFinished(false)
 			if err == runner.ErrTaskTimeout {
 				os.Exit(4) // Exit 4 for Timeout

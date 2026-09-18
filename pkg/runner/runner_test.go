@@ -17,7 +17,7 @@ func TestExecuteTiers_Success(t *testing.T) {
 	}
 
 	rep := NewMockReporter()
-	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute, 5*time.Second)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -29,7 +29,7 @@ func TestExecuteTiers_Failure(t *testing.T) {
 		{nodeFail},
 	}
 	rep := NewMockReporter()
-	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute, 5*time.Second)
 	if err == nil {
 		t.Fatal("expected an error because the task fails, got nil")
 	}
@@ -53,7 +53,7 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 
 	start := time.Now()
 	rep := NewMockReporter()
-	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 10*time.Minute, 5*time.Second)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -80,7 +80,7 @@ func TestExecuteTiers_Timeout(t *testing.T) {
 	rep := NewMockReporter()
 	
 	// Inject a very short timeout (50ms)
-	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 50*time.Millisecond)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 50*time.Millisecond, 50*time.Millisecond)
 	
 	if err != ErrTaskTimeout {
 		t.Fatalf("expected ErrTaskTimeout, got %v", err)

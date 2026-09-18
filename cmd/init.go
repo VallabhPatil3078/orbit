@@ -1,4 +1,4 @@
-﻿package cmd
+package cmd
 
 import (
 	"bytes"
@@ -22,7 +22,9 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		yamlContent := []byte(`tasks:
+		yamlContent := []byte(`version: 1
+
+tasks:
   hello:
     command: "echo Hello World"
     depends_on: []

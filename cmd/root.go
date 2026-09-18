@@ -14,6 +14,10 @@ var rootCmd = &cobra.Command{
 concurrently to maximize CPU efficiency during your Git pre-commit workflow.`,
 }
 
+func SetVersion(v string) {
+	rootCmd.Version = v
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

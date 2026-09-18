@@ -43,6 +43,13 @@ When executing pipelines via `orbit run` or validating via `orbit validate`, Orb
 - **`3`**: Task execution failure (one or more tasks returned a non-zero exit code)
 - **`4`**: Task timeout exceeded (takes priority over `3` in mixed-failure tiers)
 
+## Schema Compatibility Contract
+Orbit guarantees strict backwards compatibility within the same major schema version.
+- **Version 1 (`version: 1`)**: The current stable schema.
+- Within the same major schema version, fields are only ever added, never removed or repurposed.
+- A field's meaning, once shipped, doesn't change without a version bump.
+If your `orbit.yaml` lacks a `version` field, it implicitly defaults to `version: 1`.
+
 ## How it works
 Orbit looks for an orbit.yaml file in the root of your project:
 

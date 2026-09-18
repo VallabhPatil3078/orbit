@@ -29,6 +29,16 @@ Orbit decouples parsing, graph math, and process execution into clean packages:
 </div>
 <br>
 
+## Setup & Installation
+
+**Prerequisites:** Go 1.22+
+
+1. Install Orbit using `go install`:
+```bash
+go install github.com/VallabhPatil3078/orbit@latest
+```
+Alternatively, download a pre-compiled binary from the [GitHub Releases](https://github.com/VallabhPatil3078/orbit/releases) page.
+
 ## Commands
 Orbit comes with a few built-in commands to manage your pipelines:
 - `orbit init` - Generates a sample `orbit.yaml` and installs the Git pre-commit hook. Use `--force` or `-f` to overwrite existing configurations.

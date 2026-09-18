@@ -160,15 +160,7 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 					waitErr = err
 				}
 
-				status := StatusSuccess
-				ctxErr := taskCtx.Err()
-				if waitErr != nil {
-					status = StatusFailed
-				} else {
-					// If the process completed successfully (waitErr == nil), ignore any context errors.
-					// This prevents a race condition where the process exits normally exactly as the timeout hits.
-					ctxErr = nil
-				}
+				status, ctxErr := DetermineTaskStatus(waitErr, taskCtx.Err())
 				results <- TaskResult{Node: n, Output: outBuf.String(), Error: waitErr, CtxErr: ctxErr, Status: status}
 			}(node)
 		}
@@ -220,4 +212,15 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 		}
 	}
 	return nil
+}
+
+// DetermineTaskStatus evaluates the exit error and context error to determine the final task status.
+// It explicitly handles the race condition where a process exits normally exactly as the timeout hits.
+func DetermineTaskStatus(waitErr error, ctxErr error) (TaskStatus, error) {
+	if waitErr == nil {
+		// If the process completed successfully, ignore any context errors.
+		// This prevents a race condition where the process exits normally exactly as the timeout hits.
+		return StatusSuccess, nil
+	}
+	return StatusFailed, ctxErr
 }

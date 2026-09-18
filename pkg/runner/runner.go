@@ -2,10 +2,12 @@ package runner
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"runtime"
 	"sync"
+	"time"
 
 	"orbit/pkg/graph"
 	"github.com/bmatcuk/doublestar/v4"
@@ -19,14 +21,17 @@ const (
 	StatusSkipped TaskStatus = "Skipped"
 )
 
+var ErrTaskTimeout = fmt.Errorf("one or more tasks timed out")
+
 type TaskResult struct {
 	Node   *graph.Node
 	Output string
 	Error  error
+	CtxErr error
 	Status TaskStatus
 }
 
-func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter) error {
+func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter) error {
 	skipStates := make(map[string]bool)
 
 	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
@@ -47,6 +52,9 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 		results := make(chan TaskResult, len(tier))
 
 		for _, node := range tier {
+			if rep != nil {
+				rep.TaskStarted(node.Name)
+			}
 			wg.Add(1)
 			go func(n *graph.Node) {
 				defer wg.Done()
@@ -111,11 +119,14 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 					return
 				}
 
+				taskCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+				defer cancel()
+
 				var cmd *exec.Cmd
 				if runtime.GOOS == "windows" {
-					cmd = exec.Command("cmd", "/C", n.Command)
+					cmd = exec.CommandContext(taskCtx, "cmd", "/C", n.Command)
 				} else {
-					cmd = exec.Command("sh", "-c", n.Command)
+					cmd = exec.CommandContext(taskCtx, "sh", "-c", n.Command)
 				}
 				if n.WorkingDir != "" {
 					cmd.Dir = n.WorkingDir
@@ -125,16 +136,12 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 				cmd.Stdout = &outBuf
 				cmd.Stderr = &outBuf
 
-				if rep != nil {
-					rep.TaskStarted(n.Name)
-				}
-
 				err := cmd.Run()
 				status := StatusSuccess
 				if err != nil {
 					status = StatusFailed
 				}
-				results <- TaskResult{Node: n, Output: outBuf.String(), Error: err, Status: status}
+				results <- TaskResult{Node: n, Output: outBuf.String(), Error: err, CtxErr: taskCtx.Err(), Status: status}
 			}(node)
 		}
 
@@ -147,6 +154,7 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 		}
 
 		var tierErrors []error
+		hasTimeout := false
 		for _, node := range tier {
 			res := resMap[node.Name]
 			if res.Status == StatusSkipped {
@@ -159,7 +167,12 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 				if rep != nil {
 					rep.TaskFailed(res.Node.Name, res.Output)
 				}
-				tierErrors = append(tierErrors, fmt.Errorf("task %s failed", res.Node.Name))
+				if res.CtxErr == context.DeadlineExceeded {
+					hasTimeout = true
+					tierErrors = append(tierErrors, fmt.Errorf("task %s timed out", res.Node.Name))
+				} else {
+					tierErrors = append(tierErrors, fmt.Errorf("task %s failed", res.Node.Name))
+				}
 			} else {
 				skipStates[res.Node.Name] = false
 				if rep != nil {
@@ -169,6 +182,9 @@ func ExecuteTiers(tiers [][]*graph.Node, changedFiles []string, forceAll bool, b
 		}
 
 		if len(tierErrors) > 0 {
+			if hasTimeout {
+				return ErrTaskTimeout
+			}
 			if len(tierErrors) == 1 {
 				return tierErrors[0]
 			}

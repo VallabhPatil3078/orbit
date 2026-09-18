@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"orbit/pkg/graph"
 	"runtime"
 	"testing"
@@ -16,7 +17,7 @@ func TestExecuteTiers_Success(t *testing.T) {
 	}
 
 	rep := NewMockReporter()
-	err := ExecuteTiers(tiers, nil, true, "", rep)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -28,7 +29,7 @@ func TestExecuteTiers_Failure(t *testing.T) {
 		{nodeFail},
 	}
 	rep := NewMockReporter()
-	err := ExecuteTiers(tiers, nil, true, "", rep)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep)
 	if err == nil {
 		t.Fatal("expected an error because the task fails, got nil")
 	}
@@ -51,7 +52,7 @@ func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 
 	start := time.Now()
 	rep := NewMockReporter()
-	err := ExecuteTiers(tiers, nil, true, "", rep)
+	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep)
 	duration := time.Since(start)
 
 	if err != nil {

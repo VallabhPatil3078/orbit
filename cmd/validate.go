@@ -41,13 +41,13 @@ var validateCmd = &cobra.Command{
 
 		if err := dag.BuildEdges(); err != nil {
 			fmt.Printf("[X] DAG validation failed:\n%v\n", err)
-			os.Exit(1)
+			os.Exit(2)
 		}
 
 		_, err = dag.TopologicalSort()
 		if err != nil {
 			fmt.Printf("[X] DAG topological sort failed:\n%v\n", err)
-			os.Exit(1)
+			os.Exit(2)
 		}
 
 		fmt.Println("[V] orbit.yaml is perfectly valid! No cycles or missing dependencies detected.")

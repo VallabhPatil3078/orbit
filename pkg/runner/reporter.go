@@ -26,6 +26,8 @@ func init() {
 }
 
 // Reporter handles all CLI output and event logging for the Orbit pipeline.
+// Implementations do not need to be thread-safe; Orbit guarantees that Reporter
+// methods will be called sequentially and never concurrently.
 type Reporter interface {
 	PipelineStarted()
 	TierStarted(tierIndex int, taskNames []string)
@@ -64,6 +66,29 @@ func (r *TextReporter) TaskFailed(task string, output string) {
 }
 
 func (r *TextReporter) PipelineFinished(success bool) {
+	if success {
+		fmt.Printf("\n%s Orbit pipeline completed successfully!\n", iconFinishSuccess)
+	} else {
+		fmt.Printf("\n%s Orbit pipeline failed!\n", iconFinishFail)
+	}
+}
+
+// QuietReporter implements Reporter but suppresses non-essential output (like
+// task start/success), only printing failures and the final pipeline status.
+// This is useful for CI/CD environments.
+type QuietReporter struct{}
+
+func (r *QuietReporter) PipelineStarted()                               {}
+func (r *QuietReporter) TierStarted(tierIndex int, taskNames []string) {}
+func (r *QuietReporter) TaskStarted(task string)                       {}
+func (r *QuietReporter) TaskSkipped(task string, reason string)        {}
+func (r *QuietReporter) TaskSucceeded(task string)                     {}
+
+func (r *QuietReporter) TaskFailed(task string, output string) {
+	fmt.Printf("\n  %s %s (failed):\n%s\n", iconFail, task, output)
+}
+
+func (r *QuietReporter) PipelineFinished(success bool) {
 	if success {
 		fmt.Printf("\n%s Orbit pipeline completed successfully!\n", iconFinishSuccess)
 	} else {

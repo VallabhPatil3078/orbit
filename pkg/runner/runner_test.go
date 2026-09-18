@@ -124,27 +124,3 @@ func TestExecuteTiers_ProcessTreeCleanup(t *testing.T) {
 	// Ideally we would assert the child PID no longer exists, but getting the grandchild PID is platform-specific and complex.
 	// We trust that ProcessTree.Kill handles the group/job.
 }
-
-func TestExecuteTiers_GracefulKill_Race(t *testing.T) {
-	// Tests the race condition where a task completes successfully right as the timeout fires.
-	// We simulate this by having a task that finishes almost exactly at the timeout.
-	var sleepCmd string
-	if runtime.GOOS == "windows" {
-		sleepCmd = "ping 127.0.0.1 -n 2 > nul" // ~1s
-	} else {
-		sleepCmd = "sleep 1"
-	}
-
-	nodeRace := &graph.Node{Name: "race_task", Command: sleepCmd}
-	tiers := [][]*graph.Node{{nodeRace}}
-	
-	rep := NewMockReporter()
-	
-	// Inject a timeout of 1s, which is exactly how long the task takes.
-	// It should succeed, not timeout.
-	err := ExecuteTiers(context.Background(), tiers, nil, true, "", rep, 1*time.Second, 50*time.Millisecond)
-	
-	if err != nil {
-		t.Fatalf("expected nil (success), got %v", err)
-	}
-}

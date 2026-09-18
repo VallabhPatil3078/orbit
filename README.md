@@ -29,9 +29,19 @@ Orbit decouples parsing, graph math, and process execution into clean packages:
 
 ## Commands
 Orbit comes with a few built-in commands to manage your pipelines:
-- orbit init - Generates a sample orbit.yaml and installs the Git pre-commit hook. Use --force or -f to overwrite existing configurations.
-- orbit run - Manually executes the task pipeline based on your orbit.yaml.
-- orbit validate - Parses the YAML, builds the DAG, and checks for syntax errors, missing dependencies, or cycles *without* executing any tasks. Perfect for CI environments!
+- `orbit init` - Generates a sample `orbit.yaml` and installs the Git pre-commit hook. Use `--force` or `-f` to overwrite existing configurations.
+- `orbit run` - Manually executes the task pipeline based on your `orbit.yaml`.
+  - Use `--all` to force run all tasks regardless of path filters.
+  - Use `--quiet` or `-q` to suppress non-essential output and only print failures (ideal for CI/CD).
+- `orbit validate` - Parses the YAML, builds the DAG, and checks for syntax errors, missing dependencies, or cycles *without* executing any tasks. Perfect for CI environments!
+
+## Exit Codes
+When executing pipelines via `orbit run` or validating via `orbit validate`, Orbit uses the following standard exit codes:
+- **`0`**: Success
+- **`1`**: Configuration or validation error (e.g., malformed `orbit.yaml`, invalid glob pattern)
+- **`2`**: DAG logic error (e.g., cycle detected, missing dependencies)
+- **`3`**: Task execution failure (one or more tasks returned a non-zero exit code)
+- **`4`**: Task timeout exceeded (takes priority over `3` in mixed-failure tiers)
 
 ## How it works
 Orbit looks for an orbit.yaml file in the root of your project:

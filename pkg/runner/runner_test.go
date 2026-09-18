@@ -38,7 +38,8 @@ func TestExecuteTiers_Failure(t *testing.T) {
 func TestExecuteTiers_RunsConcurrently(t *testing.T) {
 	var sleepCmd string
 	if runtime.GOOS == "windows" {
-		sleepCmd = "powershell -c \"Start-Sleep 1\""
+		// Use ping instead of powershell to avoid slow startup times in CI causing false positive test failures
+		sleepCmd = "ping 127.0.0.1 -n 2 > nul"
 	} else {
 		sleepCmd = "sleep 1"
 	}

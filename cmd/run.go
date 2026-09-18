@@ -53,7 +53,10 @@ var runCmd = &cobra.Command{
 		// 2. Build DAG
 		dag := graph.NewDAG()
 		for name, taskCfg := range cfg.Tasks {
-			dag.AddNode(name, taskCfg.Command, taskCfg.WorkingDir, taskCfg.DependsOn, taskCfg.TriggerPaths, taskCfg.IgnorePaths)
+			if err := dag.AddNode(name, taskCfg.Command, taskCfg.WorkingDir, taskCfg.DependsOn, taskCfg.TriggerPaths, taskCfg.IgnorePaths, taskCfg.Timeout); err != nil {
+				fmt.Printf("[X] Invalid config for task %q: %v\n", name, err)
+				os.Exit(1)
+			}
 		}
 
 		if err := dag.BuildEdges(); err != nil {

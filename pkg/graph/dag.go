@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 )
 
 // Node represents a task in the DAG.
@@ -15,6 +16,7 @@ type Node struct {
 	TriggerPaths []string
 	IgnorePaths  []string
 	InDegree     int
+	Timeout      time.Duration
 }
 
 // DAG represents the Directed Acyclic Graph.
@@ -31,8 +33,23 @@ func NewDAG() *DAG {
 	}
 }
 
-// AddNode adds a task to the DAG.
-func (g *DAG) AddNode(name, command, workingDir string, dependsOn, triggerPaths, ignorePaths []string) {
+func (g *DAG) AddNode(name, command, workingDir string, dependsOn, triggerPaths, ignorePaths []string, timeout string) error {
+	var d time.Duration
+	var err error
+	if timeout != "" {
+		d, err = time.ParseDuration(timeout)
+		if err != nil {
+			return fmt.Errorf("task %q has invalid timeout %q: %v", name, timeout, err)
+		}
+		if d <= 0 {
+			return fmt.Errorf("task %q has invalid timeout %q: must be positive", name, timeout)
+		}
+		if d > 1*time.Hour {
+			// Just a warning
+			fmt.Printf("[WARNING] Task %q has an unusually long timeout: %v\n", name, d)
+		}
+	}
+
 	g.Nodes[name] = &Node{
 		Name:         name,
 		Command:      command,
@@ -41,7 +58,9 @@ func (g *DAG) AddNode(name, command, workingDir string, dependsOn, triggerPaths,
 		TriggerPaths: triggerPaths,
 		IgnorePaths:  ignorePaths,
 		InDegree:     0,
+		Timeout:      d,
 	}
+	return nil
 }
 
 // BuildEdges calculates the in-degrees and builds the adjacency list.

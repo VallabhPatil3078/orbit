@@ -119,7 +119,11 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 					return
 				}
 
-				taskCtx, cancel := context.WithTimeout(ctx, taskTimeout)
+				timeout := taskTimeout
+				if n.Timeout > 0 {
+					timeout = n.Timeout
+				}
+				taskCtx, cancel := context.WithTimeout(ctx, timeout)
 				defer cancel()
 
 				var cmd *exec.Cmd

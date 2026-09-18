@@ -14,10 +14,12 @@ type TaskConfig struct {
 	DependsOn    []string `yaml:"depends_on"`
 	TriggerPaths []string `yaml:"trigger_paths"`
 	IgnorePaths  []string `yaml:"ignore_paths"`
+	Timeout      string   `yaml:"timeout"`
 }
 
 type OrbitConfig struct {
-	Tasks map[string]TaskConfig `yaml:"tasks"`
+	Version int                   `yaml:"version"`
+	Tasks   map[string]TaskConfig `yaml:"tasks"`
 }
 
 func ParseConfig(filepath string) (*OrbitConfig, error) {
@@ -46,6 +48,12 @@ func ParseConfig(filepath string) (*OrbitConfig, error) {
 		}
 	}
 
+	if cfg.Version == 0 {
+		cfg.Version = 1
+	}
+	if cfg.Version > 1 {
+		return nil, fmt.Errorf("this config requires Orbit schema v2 or later; you're running a v1-compatible build")
+	}
+
 	return &cfg, nil
 }
-

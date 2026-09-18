@@ -36,7 +36,10 @@ var validateCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
-			dag.AddNode(name, task.Command, task.WorkingDir, task.DependsOn, task.TriggerPaths, task.IgnorePaths)
+			if err := dag.AddNode(name, task.Command, task.WorkingDir, task.DependsOn, task.TriggerPaths, task.IgnorePaths, task.Timeout); err != nil {
+				fmt.Printf("[X] Task %q has invalid config: %v\n", name, err)
+				os.Exit(1)
+			}
 		}
 
 		if err := dag.BuildEdges(); err != nil {

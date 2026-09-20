@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Orbit - A localized, high-performance DAG-based task orchestrator for Git commits.">
+    <meta property="og:title" content="Orbit | Instant CI/CD for Git Commits">
+    <meta property="og:description" content="A high-performance DAG-based task orchestrator that ensures broken code never makes it to your repository.">
+    <meta property="og:image" content="https://VallabhPatil3078.github.io/orbit/assets/og-preview.png">
+    <meta property="og:url" content="https://VallabhPatil3078.github.io/orbit/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Orbit | Instant CI/CD for Git Commits">
+    <meta name="twitter:description" content="A high-performance DAG-based task orchestrator that ensures broken code never makes it to your repository.">
+    <meta name="twitter:image" content="https://VallabhPatil3078.github.io/orbit/assets/og-preview.png">
+    <title>Orbit | Instant CI/CD for Git Commits</title>
+    
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-mesh"></div>
+
+    <header class="header">
+        <div class="logo">
+            <img src="assets/logo.png" alt="Orbit Logo" class="logo-img" width="32" height="32">
+            <span>Orbit</span>
+        </div>
+        <nav class="nav">
+            <a href="https://github.com/VallabhPatil3078/orbit" target="_blank" class="nav-link">GitHub</a>
+            <a href="https://github.com/VallabhPatil3078/orbit/releases" target="_blank" class="nav-link">Releases</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="hero">
+            <div class="hero-badge" id="version-badge">Loading latest version…</div>
+            <h1 class="hero-title">Instant CI/CD for your<br><span class="gradient-text">Git Commits</span></h1>
+            <p class="hero-subtitle">
+                A high-performance DAG-based task orchestrator that ensures broken code never makes it to your repository.
+            </p>
+            
+            <div class="install-box">
+                <div class="code-line">
+                    <span class="prompt">$</span>
+                    <span class="command">go install github.com/VallabhPatil3078/orbit@latest</span>
+                </div>
+                <button class="copy-btn" id="copy-btn" aria-label="Copy install command to clipboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="copy-toast" id="copy-toast">Copied to clipboard!</div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Maximum Concurrency</h3>
+                <p class="feature-desc">Independent tasks run in parallel using Go Goroutines to maximize your CPU efficiency.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">DAG Engine</h3>
+                <p class="feature-desc">Parses dependencies using Kahn's topological sort algorithm to guarantee correct execution order.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">Smart Path Filtering</h3>
+                <p class="feature-desc">Automatically skips tasks if their relevant files haven't changed since the last commit.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h3 class="feature-title">Zero Dependency</h3>
+                <p class="feature-desc">A single, compiled Go binary that won't bloat your project repository with heavy node_modules.</p>
+            </div>
+        </section>
+
+        <section class="code-showcase">
+            <div class="window">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="dot close"></span>
+                        <span class="dot minimize"></span>
+                        <span class="dot maximize"></span>
+                    </div>
+                    <div class="window-title">orbit.yaml</div>
+                </div>
+                <div class="window-body">
+<pre><code><span class="keyword">version</span>: <span class="number">1</span>
+
+<span class="keyword">tasks</span>:
+  <span class="string">compile</span>:
+    <span class="keyword">command</span>: <span class="string">"mvn clean compile"</span>
+    <span class="keyword">working_dir</span>: <span class="string">"./backend"</span>
+    <span class="keyword">depends_on</span>: []
+    <span class="keyword">trigger_paths</span>: [<span class="string">"backend/**/*.java"</span>]
+    <span class="keyword">timeout</span>: <span class="string">"2m"</span>
+
+  <span class="string">test</span>:
+    <span class="keyword">command</span>: <span class="string">"mvn test"</span>
+    <span class="keyword">working_dir</span>: <span class="string">"./backend"</span>
+    <span class="keyword">depends_on</span>: [<span class="string">"compile"</span>]
+    <span class="comment"># Automatically skipped if compile is skipped!</span></code></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Built for speed. Powered by Go.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

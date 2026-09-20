@@ -22,12 +22,31 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		yamlContent := []byte(`version: 1
+		yamlContent := []byte(`# Orbit configuration file — full docs: https://github.com/VallabhPatil3078/orbit#readme
+version: 1
 
 tasks:
-  hello:
-    command: "echo Hello World"
+  # Tasks with no dependencies run first, in parallel.
+  # Replace 'echo' with your real lint/test/build commands.
+  lint:
+    command: "echo Linting code..."
     depends_on: []
+    # Only runs when a matching file has changed (supports ** globs).
+    # Adjust to your stack, e.g. "**/*.go", "**/*.py", "src/**/*.ts"
+    trigger_paths: ["src/**"]
+
+  test:
+    command: "echo Running tests..."
+    # Waits for lint. Runs independently since it has its own
+    # trigger_paths — see docs on cascade-skip for tasks with none.
+    depends_on: ["lint"]
+    working_dir: "."          # run from a subdirectory if needed, e.g. "backend"
+    timeout: "2m"               # optional — overrides the global default
+    trigger_paths: ["src/**", "test/**"]
+    ignore_paths: ["**/*.md"]   # excluded from triggering, checked first
+
+# Tip: run "orbit validate" any time to check this file without
+# actually executing any tasks.
 `)
 		if err := os.WriteFile("orbit.yaml", yamlContent, 0644); err != nil {
 			fmt.Printf("Error creating orbit.yaml: %v\n", err)
@@ -70,7 +89,7 @@ tasks:
 		}
 		
 		fmt.Println("[V] Successfully installed Git pre-commit hook!")
-		fmt.Println("Orbit is ready to go! Edit orbit.yaml and try committing.")
+		fmt.Println("Orbit is ready! See the comments in orbit.yaml for a full feature walkthrough, or run 'orbit validate' to check your config.")
 	},
 }
 

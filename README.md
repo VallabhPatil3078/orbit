@@ -31,7 +31,7 @@ Orbit decouples parsing, graph math, and process execution into clean packages:
 
 ## Setup & Installation
 
-**Prerequisites:** Go 1.22+
+**Prerequisites:** Go 1.26+
 
 1. Install Orbit using `go install`:
 ```bash

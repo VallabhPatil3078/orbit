@@ -9,7 +9,7 @@ By intercepting Git hooks (like pre-commit), Orbit intelligently schedules valid
 
 <div align="center">
   <br>
-  <img src="assets/architecture.svg" alt="Orbit Architecture">
+  <img src="docs/assets/architecture.svg" alt="Orbit Architecture">
   <br>
 </div>
 
@@ -25,7 +25,7 @@ Orbit decouples parsing, graph math, and process execution into clean packages:
 
 <br>
 <div align="center">
-  <img src="assets/package-structure.svg" alt="Package Structure">
+  <img src="docs/assets/package-structure.svg" alt="Package Structure">
 </div>
 <br>
 
@@ -85,7 +85,7 @@ Behind the scenes, Orbit groups the tasks into dependent "Tiers" and processes t
 
 <br>
 <div align="center">
-  <img src="assets/execution.svg" alt="DAG Execution">
+  <img src="docs/assets/execution.svg" alt="DAG Execution">
 </div>
 <br>
 

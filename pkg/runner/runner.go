@@ -1,9 +1,11 @@
 package runner
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"runtime"
 	"sync"
@@ -33,6 +35,25 @@ type TaskResult struct {
 
 func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []string, forceAll bool, baseRef string, rep Reporter, taskTimeout time.Duration, taskGracePeriod time.Duration) error {
 	skipStates := make(map[string]bool)
+
+	matchCache := make(map[string]bool)
+	var cacheMu sync.RWMutex
+	checkMatch := func(pattern, file string) (bool, error) {
+		key := pattern + "|" + file
+		cacheMu.RLock()
+		match, ok := matchCache[key]
+		cacheMu.RUnlock()
+		if ok {
+			return match, nil
+		}
+		match, err := doublestar.Match(pattern, file)
+		if err == nil {
+			cacheMu.Lock()
+			matchCache[key] = match
+			cacheMu.Unlock()
+		}
+		return match, err
+	}
 
 	if len(changedFiles) == 0 && baseRef == "" && !forceAll {
 		fmt.Println("[!] No staged changes detected — running all tasks as a fallback.")
@@ -68,7 +89,7 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 						for _, file := range changedFiles {
 							ignored := false
 							for _, ignoreGlob := range n.IgnorePaths {
-								match, err := doublestar.Match(ignoreGlob, file)
+								match, err := checkMatch(ignoreGlob, file)
 								if err != nil {
 									fmt.Printf("[!] Warning: invalid ignore path pattern %q: %v\n", ignoreGlob, err)
 								}
@@ -87,7 +108,7 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 							}
 							
 							for _, triggerGlob := range n.TriggerPaths {
-								match, err := doublestar.Match(triggerGlob, file)
+								match, err := checkMatch(triggerGlob, file)
 								if err != nil {
 									fmt.Printf("[!] Warning: invalid trigger path pattern %q: %v\n", triggerGlob, err)
 								}
@@ -137,8 +158,22 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 				}
 				
 				var outBuf bytes.Buffer
-				cmd.Stdout = &outBuf
-				cmd.Stderr = &outBuf
+				var outMu sync.Mutex
+				pr, pw := io.Pipe()
+				cmd.Stdout = pw
+				cmd.Stderr = pw
+
+				go func() {
+					scanner := bufio.NewScanner(pr)
+					for scanner.Scan() {
+						line := scanner.Text()
+						outMu.Lock()
+						outBuf.WriteString(line + "\n")
+						outMu.Unlock()
+						// Write to stdout with prefix
+						fmt.Printf("[%s] %s\n", n.Name, line)
+					}
+				}()
 
 				pt := NewProcessTree(cmd)
 				err := pt.Start()
@@ -155,13 +190,18 @@ func ExecuteTiers(ctx context.Context, tiers [][]*graph.Node, changedFiles []str
 					}()
 					
 					waitErr = pt.Wait()
+					pw.Close() // Ensure the scanner goroutine finishes
 					close(done)
 				} else {
+					pw.Close()
 					waitErr = err
 				}
 
 				status, ctxErr := DetermineTaskStatus(waitErr, taskCtx.Err())
-				results <- TaskResult{Node: n, Output: outBuf.String(), Error: waitErr, CtxErr: ctxErr, Status: status}
+				outMu.Lock()
+				finalOut := outBuf.String()
+				outMu.Unlock()
+				results <- TaskResult{Node: n, Output: finalOut, Error: waitErr, CtxErr: ctxErr, Status: status}
 			}(node)
 		}
 

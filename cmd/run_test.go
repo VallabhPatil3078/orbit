@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestRunCmd_Success(t *testing.T) {
 	// Create a valid orbit.yaml
 	yamlContent := []byte(`tasks:
   test_task:
-    command: "echo test"
+    command: "echo test > output.txt"
     depends_on: []
 `)
 	os.WriteFile("orbit.yaml", yamlContent, 0644)
@@ -29,5 +30,15 @@ func TestRunCmd_Success(t *testing.T) {
 
 	// Run the command
 	runCmd.Run(runCmd, []string{})
+
+	// Verify the command actually ran by checking the output file
+	content, err := os.ReadFile("output.txt")
+	if err != nil {
+		t.Fatalf("Expected output.txt to be created by the task, got error: %v", err)
+	}
+	
+	if strings.TrimSpace(string(content)) != "test" {
+		t.Errorf("Expected output.txt to contain 'test', got %q", string(content))
+	}
 }
 

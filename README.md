@@ -16,7 +16,8 @@ By intercepting Git hooks (like pre-commit), Orbit intelligently schedules valid
 ## Features
 - **DAG Engine:** Parses tasks using Topological Sort (Kahn's algorithm).
 - **Maximum Concurrency:** Independent tasks run in parallel using Go Goroutines.
-- **Smart Path Filtering:** Automatically skips tasks if relevant files haven't changed, saving precious execution time.
+- **Real-time Log Streaming:** Output from concurrently running tasks is safely multiplexed and streamed to your terminal so you aren't left guessing.
+- **Smart Path Filtering & Caching:** Automatically skips tasks if relevant files haven't changed. Glob patterns are compiled and cached for $O(1)$ lookup performance on large monorepos.
 - **Zero-Dependency:** A single Go binary that doesn't bloat your project repository.
 - **Git Hook Integration:** Automatically intercepts commits to prevent broken code from being pushed.
 
@@ -91,3 +92,8 @@ Behind the scenes, Orbit groups the tasks into dependent "Tiers" and processes t
 
 *(This project is currently under active development).*
 
+## Contributing
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on branching, testing, and commit standards.
+
+## License
+Orbit is released under the [MIT License](LICENSE).

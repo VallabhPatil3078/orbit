@@ -1,6 +1,6 @@
 # Orbit 🪐
 ![CI](https://github.com/VallabhPatil3078/orbit/actions/workflows/ci.yml/badge.svg)
-
+[![Website](https://img.shields.io/badge/Website-orbit-blue?style=flat&logo=google-earth)](https://vallabhpatil3078.github.io/orbit/)
 *(Note for contributors: When cutting a release, ensure the CI workflow is green on `main` before pushing a `v*` tag. The release workflow relies on the existing state of the codebase.)*
 
 **Orbit** is a localized, high-performance DAG-based task orchestrator designed to act as an instant CI/CD gatekeeper for your Git commits. 
